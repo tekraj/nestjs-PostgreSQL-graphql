@@ -1,0 +1,126 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator nestgraphql {
+  provider = "node node_modules/prisma-nestjs-graphql"
+  output   = "../src/modules/graphql-api/prismagraphql"
+  reExport = Directories
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Operation {
+  list
+  get
+  create
+  update
+  delete
+  search
+  onCreate
+  onUpdate
+  onDelete
+}
+
+enum RoleTypes {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  AUTHOR
+  READER
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  name        String @unique
+  roleType    RoleTypes
+  permissions Permission[]
+  User        User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now())
+}
+
+model Permission {
+  id                Int      @id @default(autoincrement())
+  modelName         String @unique
+  allowedOperations Operation[]
+  rolePermissionsId Int
+  role              Role        @relation(fields: [rolePermissionsId], references: [id])
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now())
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  email       String @unique
+  name        String
+  password    String
+  userRoleId  Int     
+  role        Role       @relation(fields: [userRoleId], references: [id])
+  userStatus  String     @default("Active")
+  roleType    RoleTypes?
+  phoneNumber String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now())
+  comments    Comment[]
+  likes       Like[]
+}
+model Category {
+  id           Int         @id @default(autoincrement())
+  name          String        @unique
+  articles      Article[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now())
+}
+model Article {
+  id           Int         @id @default(autoincrement())
+  title        String
+  url          String       @unique
+  content      String
+  views        Int            @default(0)
+  categoryId    Int
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @default(now())
+  comments     Comment[]
+  likes        Like[]
+  ArticleImage ArticleImage[]
+  Category Category  @relation(fields: [categoryId], references: [id])
+}
+
+model Comment {
+  id        Int   @id @default(autoincrement())
+  text      String
+  articleId Int
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Like {
+  id        Int   @id @default(autoincrement())
+  userId    Int
+  articleId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  article   Article  @relation(fields: [articleId], references: [id])
+}
+
+model ArticleImage {
+  id        Int   @id @default(autoincrement())
+  articleId Int
+  imageUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id])
+}
